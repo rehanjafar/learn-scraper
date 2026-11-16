@@ -18,9 +18,9 @@ An extension granted LEARN access is still powerful: changing its code could all
 
 The local Apple Development signature establishes integrity of the built artifact and signer identity, not independent security review or Apple notarization. Gatekeeper distribution assessment is distinct from local Xcode development testing. Use only Safari’s normal signed-extension controls for this local build. Never enable unsigned extensions, disable cross-origin restrictions, remove quarantine flags, disable Gatekeeper, or enable remote automation to make it work. If Safari refuses the signed build, stop and use a properly provisioned build instead. The signed host app is sandboxed with no network or file-access entitlements; the signed extension is sandboxed with outbound networking only. Neither has a debugging entitlement.
 
-## Verification still required
+## Live verification (2026-11-16)
 
-Real Safari activation, one-time website permissions, pairing, and a signed-in LEARN API request must be tested on the user's Mac. Do not treat synthetic tests as proof that live Safari authentication works. Independent human security review is recommended before relying on this for sensitive account access.
+The signed 0.2.1 app was installed and enabled through Safari’s normal controls on the original Mac. LEARN-only website permission and one-time local pairing were completed. A real MCP sign_in_status call verified Safari connection and LEARN sign-in while a different Safari tab was active, with cookies_exported false. Reconnection after a local server restart and a second request also passed. No identity or course data was printed by these checks. No unsigned-extension setting, remote automation, cross-origin bypass, quarantine removal, or Gatekeeper override was used. The local listener closed when the test client exited. These live checks are not an independent security audit.
 
 ## Dependency and protocol checks (2026-11-16)
 

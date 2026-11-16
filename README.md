@@ -4,11 +4,11 @@ A local, read-only MCP server that uses your existing Safari LEARN sign-in. Auth
 
 ## Status
 
-Experimental security-sensitive software. Version 0.2.0 has passed automated boundary tests and a simulated MCP roundtrip, with patched dependencies and verified minimum signed entitlements. The signed 0.2.0 extension was enabled using Safari’s normal controls on the original Mac, with unsigned extensions, remote automation, cross-origin bypasses, and private browsing access all disabled. No purchase or new enrollment was needed. One-time website access, pairing, and a real LEARN request still need verification. No independent audit or guarantee of absolute safety is claimed.
+Version 0.2.1 is enabled and paired on the original Mac. Live MCP sign-in checks succeeded with the LEARN home tab inactive, including reconnection after restarting the local server and a repeated request. The developer signature, exact sandbox entitlements, source-to-build match, automated boundary tests, and dependency advisory scan were verified. Unsigned extensions, remote automation, cross-origin bypasses, and private browsing access remain disabled. No purchase or new enrollment was needed on that Mac. This remains experimental software, not an independently audited or absolutely safe product.
 
 ## How it works
 
-Keep a signed-in `https://learn.uwaterloo.ca/d2l/home` tab open in Safari. The isolated content script polls the extension, which polls a local broker. An MCP request becomes a GET to one of ten exact API route patterns. Safari attaches its own authentication internally. The extension returns only selected course-data fields, not response headers or the original response body. Nothing is fetched just because you sign in, and no course data is stored by this server.
+Keep a signed-in `https://learn.uwaterloo.ca/d2l/home` tab open in Safari. The extension background process polls the authenticated local broker and dispatches each requested read to an isolated content script in the LEARN home tab. The tab can be inactive. An MCP request becomes a GET to one of ten exact API route patterns. Safari attaches its own authentication internally. The extension returns only selected course-data fields, not response headers or the original response body. Nothing is fetched just because you sign in, and no course data is stored by this server.
 
 The broker listens only on `127.0.0.1:18766` while the MCP server is running. It uses a randomly generated 256-bit local key to authenticate each request and response, checks Host and Origin, rejects replayed requests, and keeps requests and responses only in memory. The key itself never crosses the loopback connection. Ordinary websites cannot use it. The key is entered once into Safari extension storage and is never built into the extension or committed to Git.
 
@@ -23,11 +23,11 @@ python3 -m venv .venv
 DEVELOPMENT_TEAM=YOUR_TEAM_ID SIGNING_IDENTITY='YOUR_APPLE_DEVELOPMENT_IDENTITY' .venv/bin/python build_safari.py
 ```
 
-Copy the built app to your Applications folder. The builder verifies the developer signature and exact signed sandbox entitlements. This is a local development build, not a notarized distribution build; no paid enrollment was required for the build on the original Mac. Use Safari’s normal extension controls only. If Safari refuses to enable it, stop rather than weakening protections. Enable **Waterloo Safari Reader** in Safari Settings → Extensions. Allow it on **learn.uwaterloo.ca**; it also needs access to its local connection at **127.0.0.1**. Do not enable it in private browsing. No broad website access is needed.
+Copy the built app to your Applications folder. The builder verifies the developer signature and exact signed sandbox entitlements. This is a local development build, not a notarized distribution build; no purchase or new enrollment was needed on the original Mac. Use Safari’s normal extension controls only. If Safari refuses to enable it, stop rather than weakening protections. Enable **Waterloo Safari Reader** in Safari Settings → Extensions. Allow it on **learn.uwaterloo.ca**; it also needs access to its local connection at **127.0.0.1**. Do not enable it in private browsing. No broad website access is needed.
 
 Run `.venv/bin/python setup_local.py --show-pairing-key` locally. Enter that key in the extension popup and choose **Pair locally**. Do not send the key to anyone or include it in screenshots, logs, issues, or commits.
 
-Configure your local MCP client with the absolute path to `.venv/bin/python` as the command and the absolute path to `safari_server.py` as its argument. This is a stdio server; it does not expose MCP over the network. Sign in to LEARN normally in Safari and leave the home tab open.
+Configure your local MCP client with the absolute path to `.venv/bin/python` as the command and the absolute path to `safari_server.py` as its argument. This is a stdio server; it does not expose MCP over the network. Sign in to LEARN normally in Safari and leave the home tab open. Reload the tab once after initial enablement or an extension update so the current content script is loaded.
 
 ## Supported data
 

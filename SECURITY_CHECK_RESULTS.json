@@ -278,5 +278,20 @@
       "name": "websockets",
       "version": "17.4"
     }
-  ]
+  ],
+  "live_verification": {
+    "extension_version": "0.2.1",
+    "developer_signature_verified": true,
+    "minimum_sandbox_entitlements_verified": true,
+    "built_resources_match_reviewed_source": true,
+    "enabled_with_normal_safari_controls": true,
+    "learn_only_website_access": true,
+    "private_browsing_access": false,
+    "cookies_exported": false,
+    "live_mcp_sign_in_status_verified": true,
+    "inactive_learn_tab_verified": true,
+    "server_restart_reconnection_verified": true,
+    "repeated_background_request_verified": true,
+    "security_bypasses_used": false
+  }
 }
