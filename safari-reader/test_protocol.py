@@ -30,12 +30,13 @@ async def main():
  thread.start()
  try:
   async with Client(safari_server.mcp) as client:
-   tools=await client.list_tools();assert len(tools)==9
-   assert all(t.annotations.read_only_hint for t in tools)
+   tools=await client.list_tools();assert len(tools)==12
+   assert all(t.annotations.read_only_hint for t in tools if t.name!='planner_state_record')
+   assert not next(t for t in tools if t.name=='planner_state_record').annotations.read_only_hint
    result=await client.call_tool('learn_courses',{})
    assert not result.is_error and 'TEST101' in str(result)
    invalid=await client.call_tool('learn_grades',{'course':-1},raise_on_error=False)
    assert invalid.is_error
-   print('SYNTHETIC_MCP_ROUNDTRIP_PASSED; 9_READ_ONLY_TOOLS')
+   print('SYNTHETIC_MCP_ROUNDTRIP_PASSED; 11_READ_ONLY_AND_1_LOCAL_TRACKER_TOOL')
  finally:stop.set();thread.join(2)
 asyncio.run(main())

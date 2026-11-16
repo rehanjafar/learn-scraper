@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const root=__dirname+'/extension/';
 vm.runInThisContext(fs.readFileSync(root+'policy.js','utf8'));
 assert.equal(SafariPolicy.kind('/d2l/api/lp/1.43/users/whoami'),'whoami');
-for(const path of ['https://evil.example/','/d2l/home','/d2l/api/lp/1.43/users/whoami?token=x','/d2l/api/le/1.57/1/content/topics/1/file','/d2l/api/lp/1.43/users/whoami\n'])assert.equal(SafariPolicy.kind(path),null,path);
+for(const path of ['https://evil.example/','/d2l/home','/d2l/api/lp/1.43/users/whoami?token=x','/d2l/api/le/1.57/1/content/topics/1/file?download=1','/d2l/api/lp/1.43/users/whoami\n'])assert.equal(SafariPolicy.kind(path),null,path);
 const result=SafariPolicy.project('courses',{Items:[{OrgUnit:{Id:1,Name:'Course',Code:'C1',Token:'SECRET'},Access:{CanAccess:true,IsActive:true},Cookie:'SECRET'}],Authorization:'SECRET'});
 assert(!JSON.stringify(result).includes('SECRET'));
 assert.deepEqual(SafariPolicy.project('whoami',{Identifier:42,Token:'SECRET',Password:'SECRET'}),{Identifier:42});
@@ -44,3 +44,8 @@ vm.createContext(context);vm.runInContext(fs.readFileSync(root+'background.js','
  assert(manifest.background.persistent);assert(!manifest.permissions.includes('tabs'));
  console.log('EXTENSION_SECURITY_AND_BACKGROUND_ROUNDTRIP_PASSED; NO_EXTRA_PERMISSIONS');
 })().catch(e=>{console.error(e);process.exit(1)});
+
+assert.equal(SafariPolicy.kind('/d2l/api/le/1.57/1/content/topics/1/file'),'file');
+assert.equal(SafariPolicy.kind('/d2l/api/lp/1.43/users/whoami'+String.fromCharCode(10)),null);
+assert.equal(SafariPolicy.fileURL(1288715,'/content/enforced/1288715-MATH135_1269/CourseSchedule.pdf'),'https://learn.uwaterloo.ca/content/enforced/1288715-MATH135_1269/CourseSchedule.pdf');
+for(const value of ['https://evil.example/file.pdf','https://learn.uwaterloo.ca/content/enforced/1-other/file.pdf','/content/enforced/1288715-course/../../secret','/content/enforced/1288715-course/file.pdf?token=x','/content/enforced/1288715-course/%25252e%25252e/secret','https://evil@learn.uwaterloo.ca/content/enforced/1288715-course/file.pdf'])assert.throws(()=>SafariPolicy.fileURL(1288715,value));

@@ -61,13 +61,13 @@ class Learn:
             ],
         }
 
-    def due(self, days: int = 14):
+    def due(self, days: int = 14, course: int | None = None):
         now = datetime.now(timezone.utc)
         fmt = "%Y-%m-%dT%H:%M:%S.000Z"  # D2L's UTCDateTime format
         start, end = (now - timedelta(days=1)).strftime(fmt), (now + timedelta(days=days)).strftime(fmt)
         window = f"startDateTime={start}&endDateTime={end}"
         events = []
-        for c in self.courses():
+        for c in (self.courses() if course is None else [{'id':course,'code':str(course)}]):
             page = self._api(f"{LE}/{c['id']}/calendar/events/myEvents/?{window}")
             for e in page.get("Objects", []) if isinstance(page, dict) else page:  # paged result
                 events.append({"course": c["code"], "title": e["Title"], "start": e["StartDateTime"],

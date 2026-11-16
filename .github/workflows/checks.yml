@@ -19,3 +19,5 @@ jobs:
       - run: python safari-reader/test_security.py
       - run: node safari-reader/test_extension.cjs
       - run: python safari-reader/test_protocol.py
+      - run: python safari-reader/test_documents.py
+      - run: python safari-reader/test_planner.py

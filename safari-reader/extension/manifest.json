@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Waterloo Safari Reader",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Read requested LEARN data using Safari. Never exports cookies or passwords.",
   "permissions": [
     "https://learn.uwaterloo.ca/*",

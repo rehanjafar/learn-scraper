@@ -1,6 +1,7 @@
 /* Exact read-only endpoint and output allowlists; no arbitrary URLs or headers. */
 (function(g){
 const routes=[
+ [/^\/d2l\/api\/le\/1\.57\/[1-9]\d*\/content\/topics\/[1-9]\d*\/file$/, 'file'],
  [/^\/d2l\/api\/lp\/1\.43\/users\/whoami$/, 'whoami'],
  [/^\/d2l\/api\/lp\/1\.43\/enrollments\/myenrollments\/\?orgUnitTypeId=3$/, 'courses'],
  [/^\/d2l\/api\/le\/1\.57\/[1-9]\d*\/grades\/values\/myGradeValues\/$/, 'grades'],
@@ -12,7 +13,7 @@ const routes=[
  [/^\/d2l\/api\/le\/1\.57\/[1-9]\d*\/content\/toc$/, 'toc'],
  [/^\/d2l\/api\/le\/1\.57\/[1-9]\d*\/content\/topics\/[1-9]\d*$/, 'topic']
 ];
-function kind(path){if(typeof path!=='string'||path.length>300)return null;return routes.find(([r])=>r.test(path))?.[1]||null;}
+function kind(path){if(typeof path!=='string'||path.length>300||/[\r\n]/.test(path))return null;return routes.find(([r])=>r.test(path))?.[1]||null;}
 function text(v){return typeof v==='string'?v.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'').replace(/<[^>]*>/g,' ').slice(0,20000):v;}
 function scalar(v){return v===null||typeof v==='boolean'||(typeof v==='number'&&Number.isFinite(v))||typeof v==='string';}
 function pick(o,keys){const r={};for(const k of keys){if(o&&scalar(o[k]))r[k]=typeof o[k]==='string'?text(o[k]):o[k];}return r;}
@@ -37,5 +38,15 @@ function project(k,d){
  default:throw Error('Blocked request');
  }
 }
-g.SafariPolicy={kind,project};
+function fileURL(course,value){
+ if(!Number.isSafeInteger(course)||course<1||typeof value!=='string'||value.length>2000)throw Error('Blocked file URL');
+ const u=new URL(value,'https://learn.uwaterloo.ca');
+ if(u.origin!=='https://learn.uwaterloo.ca'||u.username||u.password||u.hash)throw Error('External file links are unsupported');
+ let path=u.pathname;for(let i=0;i<2;i++)path=decodeURIComponent(path);
+ if(/[\\\x00-\x1f]/.test(path)||path.split('/').some(p=>p==='.'||p==='..')||/%(?:2e|2f|5c|25)/i.test(path))throw Error('Blocked encoded file URL');
+ if(!path.startsWith('/content/enforced/'+course+'-')&&!path.startsWith('/content/enforced/'+course+'/'))throw Error('File is outside this course');
+ for(const [k,v] of u.searchParams){if(k!=='ou'||v!==String(course))throw Error('Unsupported file query');}
+ return u.href;
+}
+g.SafariPolicy={kind,project,fileURL};
 })(globalThis);

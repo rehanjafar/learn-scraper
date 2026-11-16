@@ -37,11 +37,11 @@ async function tick(){
   let result;
   try{
    if(!SafariPolicy.kind(job.path))throw Error('Blocked request');
-   const reply=await Promise.race([browser.tabs.sendMessage(tab.id,{type:'learnRead',path:job.path}),new Promise((_,reject)=>setTimeout(()=>reject(Error('Tab unavailable')),12000))]);
+   const reply=await Promise.race([browser.tabs.sendMessage(tab.id,{type:'learnRead',path:job.path}),new Promise((_,reject)=>setTimeout(()=>reject(Error('Tab unavailable')),16000))]);
    if(!reply||(!('data' in reply)&&!('error' in reply)))throw Error('Tab unavailable');
    result='data' in reply?{id:job.id,data:reply.data}:{id:job.id,error:'LEARN sign-in required.'};
   }catch(e){result={id:job.id,error:'Keep a signed-in LEARN home tab open in Safari.'};}
-  const body=JSON.stringify(result);if(encoder.encode(body).length>1500000)throw Error('Response too large');
+  const body=JSON.stringify(result);if(encoder.encode(body).length>6000000)throw Error('Response too large');
   await bridge('/result',body);
  }catch(e){/* Idle without a local server. Never log private data. */}
  finally{busy=false;}

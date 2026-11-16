@@ -15,3 +15,6 @@ safari-reader/public-source/
 data/
 *profile*/
 *cookies*.json
+
+planner_state/
+MORNING_PLANNER_PRIVATE.md

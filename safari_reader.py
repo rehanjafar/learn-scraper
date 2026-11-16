@@ -17,6 +17,7 @@ PORT = 18766
 PREFIX = f'127.0.0.1:{PORT}'
 ORIGIN = re.compile(r'safari-web-extension://[A-Za-z0-9-]+\Z')
 ROUTES = [
+ r'/d2l/api/le/1\.57/[1-9]\d*/content/topics/[1-9]\d*/file',
  r'/d2l/api/lp/1\.43/users/whoami',
  r'/d2l/api/lp/1\.43/enrollments/myenrollments/\?orgUnitTypeId=3',
  r'/d2l/api/le/1\.57/[1-9]\d*/grades/values/myGradeValues/',
@@ -79,7 +80,7 @@ class Broker:
         self.nonces={}
         self.last_seen=0
         self.http=None
-    def request(self,path,timeout=18):
+    def request(self,path,timeout=24):
         if not allowed(path):raise ToolError('This operation is outside the Safari reader allowlist.')
         job={'id':secrets.token_hex(16),'path':path,'claimed':False,'event':threading.Event(),'result':None}
         with self.lock:
@@ -143,7 +144,7 @@ class Broker:
                         or len(self.headers.get_all('Content-Length',[]))!=1):
                         self.reply(400);return
                     size=int(self.headers.get('Content-Length','0'))
-                    if not 0<size<=2000000:self.reply(413);return
+                    if not 0<size<=6000000:self.reply(413);return
                     body=self.rfile.read(size)
                     if len(body)!=size:self.reply(400);return
                 except (ValueError,TimeoutError,OSError):self.reply(400);return

@@ -32,7 +32,7 @@ class SecurityTests(unittest.TestCase):
  def test_malformed_id(self):self.assertEqual(self.post('/result',{'id':[],'data':{}})[0],409)
  def test_url_allowlist(self):
   self.assertTrue(allowed('/d2l/api/lp/1.43/users/whoami'))
-  for path in ['https://evil.example/','//evil.example/','/d2l/home','/d2l/api/lp/1.43/users/whoami?token=secret','/d2l/api/le/1.57/1/content/topics/1/file','/d2l/api/le/1.57/1/../users/','/d2l/api/lp/1.43/users/whoami\n']:
+  for path in ['https://evil.example/','//evil.example/','/d2l/home','/d2l/api/lp/1.43/users/whoami?token=secret','/d2l/api/le/1.57/1/content/topics/1/file?download=1','/d2l/api/le/1.57/1/../users/','/d2l/api/lp/1.43/users/whoami\n']:
    self.assertFalse(allowed(path),path)
  def test_full_request_roundtrip_and_replay(self):
   with concurrent.futures.ThreadPoolExecutor() as pool:
