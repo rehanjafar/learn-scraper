@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+*.log
+.DS_Store
+safari-reader/token
+safari-reader/build/
+safari-reader/project/
+safari-reader/public-source/
+*.app/
+*.appex/
+*.dSYM/
+data/
+*profile*/
+*cookies*.json

@@ -1,0 +1,26 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const root=__dirname+'/extension/';
+vm.runInThisContext(fs.readFileSync(root+'policy.js','utf8'));
+assert.equal(SafariPolicy.kind('/d2l/api/lp/1.43/users/whoami'),'whoami');
+for(const path of ['https://evil.example/','/d2l/home','/d2l/api/lp/1.43/users/whoami?token=x','/d2l/api/le/1.57/1/content/topics/1/file','/d2l/api/lp/1.43/users/whoami\n'])assert.equal(SafariPolicy.kind(path),null,path);
+const result=SafariPolicy.project('courses',{Items:[{OrgUnit:{Id:1,Name:'Course',Code:'C1',Token:'SECRET'},Access:{CanAccess:true,IsActive:true},Cookie:'SECRET'}],Authorization:'SECRET'});
+assert(!JSON.stringify(result).includes('SECRET'));
+assert.deepEqual(SafariPolicy.project('whoami',{Identifier:42,Token:'SECRET',Password:'SECRET'}),{Identifier:42});
+assert.equal(SafariPolicy.project('topic',{Title:'Title'}).Url,null);
+assert.equal(SafariPolicy.project('topic',{Title:'Title',Url:'https://example.com/?token=SECRET'}).Url,null);
+assert(!SafariPolicy.project('news',[{Title:'Title',Body:{Html:'<script>SECRET</script><b>Text</b>'}}])[0].Body.Html.includes('SECRET'));
+const manifest=JSON.parse(fs.readFileSync(root+'manifest.json'));
+assert(!manifest.permissions.some(p=>/cookies|webRequest|nativeMessaging|all_urls/.test(p)));
+assert(!manifest.externally_connectable);
+let listener,fetches=0;
+vm.runInNewContext(fs.readFileSync(root+'background.js','utf8'),{browser:{storage:{local:{get:async()=>({localKey:'x'.repeat(43)})}},runtime:{onMessage:{addListener:f=>listener=f}}},fetch:async()=>{fetches++;return {ok:true,json:async()=>({})}}});
+(async()=>{
+ await listener({type:'poll'},{url:'https://evil.example/',frameId:0,tab:{id:1}});
+ await listener({type:'poll'},{url:'https://learn.uwaterloo.ca/d2l/home',frameId:1,tab:{id:1}});
+ await listener({type:'poll'},{url:'https://learn.uwaterloo.ca/d2l/homefake',frameId:0,tab:{id:1}});
+ await listener({type:'cookies'},{url:'https://learn.uwaterloo.ca/d2l/home',frameId:0,tab:{id:1}});
+ assert.equal(fetches,0);
+ await listener({type:'poll'},{url:'https://learn.uwaterloo.ca/d2l/home',frameId:0,tab:{id:1}});
+ assert.equal(fetches,1);
+ console.log('EXTENSION_SECURITY_CHECKS_PASSED');
+})().catch(e=>{console.error(e);process.exit(1)});

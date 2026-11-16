@@ -1,0 +1,35 @@
+{
+  "manifest_version": 2,
+  "name": "Waterloo Safari Reader",
+  "version": "0.1.0",
+  "description": "Read requested LEARN data using Safari. Never exports cookies or passwords.",
+  "permissions": [
+    "https://learn.uwaterloo.ca/*",
+    "http://127.0.0.1:18766/*",
+    "storage"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://learn.uwaterloo.ca/d2l/home*"
+      ],
+      "js": [
+        "policy.js",
+        "reader.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "browser_action": {
+    "default_title": "Waterloo Safari Reader",
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:18766 https://learn.uwaterloo.ca"
+}

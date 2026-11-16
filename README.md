@@ -4,7 +4,7 @@ A local, read-only MCP server that uses your existing Safari LEARN sign-in. Auth
 
 ## Status
 
-Experimental security-sensitive software. Automated boundary tests pass; a real Safari permission, pairing, and signed-in LEARN roundtrip must still be verified. This has not received an independent security audit and is not a guarantee of extreme safety.
+Experimental security-sensitive software. Automated boundary tests pass, including a simulated MCP roundtrip. The initial local Apple Development build passed signature checks but was rejected by Gatekeeper; it has not been enabled. A properly accepted build and a real Safari permission, pairing, and signed-in LEARN roundtrip must still be verified. This has not received an independent security audit and is not a guarantee of extreme safety.
 
 ## How it works
 
@@ -38,6 +38,7 @@ Courses, calendar due dates, grades, assignments, submission metadata, announcem
 ```sh
 .venv/bin/python safari-reader/test_security.py
 node safari-reader/test_extension.cjs
+.venv/bin/python safari-reader/test_protocol.py
 ```
 
 These use synthetic data and do not access your university account.
