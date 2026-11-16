@@ -4,19 +4,24 @@ from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
 from fastmcp import Client
-with patch('safari_reader.Path.read_text',return_value='synthetic-protocol-test-key'):
+from safari_reader import request_signature
+import secrets,time
+with patch('safari_reader.load_key',return_value='T'*43):
  import safari_server
 
 def simulate_browser(stop):
  while not stop.wait(.02):
   try:
-   headers={'Authorization':'Bearer synthetic-protocol-test-key','Origin':'safari-web-extension://TEST-UUID','Content-Type':'application/json'}
-   req=urllib.request.Request('http://127.0.0.1:18766/next',data=b'{}',headers=headers)
+   origin='safari-web-extension://TEST-UUID'
+   def headers(path,body):
+    timestamp=str(int(time.time()));nonce=secrets.token_hex(16)
+    return {'Origin':origin,'Content-Type':'application/json','X-Waterloo-Time':timestamp,'X-Waterloo-Nonce':nonce,'X-Waterloo-Signature':request_signature('T'*43,origin,path,timestamp,nonce,body)}
+   req=urllib.request.Request('http://127.0.0.1:18766/next',data=b'{}',headers=headers('/next',b'{}'))
    with urllib.request.urlopen(req,timeout=1) as r:job=json.load(r)
    if not job:continue
    assert job['path']=='/d2l/api/lp/1.43/enrollments/myenrollments/?orgUnitTypeId=3'
    body={'id':job['id'],'data':{'Items':[{'OrgUnit':{'Id':123,'Name':'Test Course','Code':'TEST101'},'Access':{'IsActive':True,'CanAccess':True,'StartDate':None,'EndDate':None}}]}}
-   req=urllib.request.Request('http://127.0.0.1:18766/result',data=json.dumps(body).encode(),headers=headers)
+   req=urllib.request.Request('http://127.0.0.1:18766/result',data=json.dumps(body).encode(),headers=headers('/result',json.dumps(body).encode()))
    with urllib.request.urlopen(req,timeout=1) as r:assert r.status==200
   except (urllib.error.URLError,OSError):pass
 async def main():
