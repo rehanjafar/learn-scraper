@@ -21,3 +21,4 @@ jobs:
       - run: python safari-reader/test_protocol.py
       - run: python safari-reader/test_documents.py
       - run: python safari-reader/test_planner.py
+      - run: node safari-reader/test_chromium.cjs

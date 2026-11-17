@@ -17,6 +17,9 @@ def sandbox_profile():
             +'(import "dyld-support.sb")(allow file-map-executable (subpath "/opt/homebrew") (subpath '+quote(venv)+'))')
 
 def read_document(file,start_unit=1,max_units=12):
+    if sys.platform=='linux':
+        from linux_document_reader import read_document_linux
+        return read_document_linux(file,start_unit,max_units)
     if sys.platform!='darwin' or not Path('/usr/bin/sandbox-exec').exists():
         raise ToolError('The protected document reader currently requires the macOS parser sandbox.')
     payload={k:file[k] for k in ('base64','size','sha256','format')}

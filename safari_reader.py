@@ -15,7 +15,7 @@ from fastmcp.exceptions import ToolError
 ROOT = Path(__file__).resolve().parent
 PORT = 18766
 PREFIX = f'127.0.0.1:{PORT}'
-ORIGIN = re.compile(r'safari-web-extension://[A-Za-z0-9-]+\Z')
+ORIGIN = re.compile(r'(?:safari-web-extension://[A-Za-z0-9-]+|chrome-extension://[a-p]{32})\Z')
 ROUTES = [
  r'/d2l/api/le/1\.57/[1-9]\d*/content/topics/[1-9]\d*/file',
  r'/d2l/api/lp/1\.43/users/whoami',
@@ -80,7 +80,7 @@ class Broker:
         self.nonces={}
         self.last_seen=0
         self.http=None
-    def request(self,path,timeout=24):
+    def request(self,path,timeout=70):
         if not allowed(path):raise ToolError('This operation is outside the Safari reader allowlist.')
         job={'id':secrets.token_hex(16),'path':path,'claimed':False,'event':threading.Event(),'result':None}
         with self.lock:

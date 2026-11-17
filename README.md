@@ -62,3 +62,7 @@ For a matching macOS arm64 / Python 3.13 environment, `requirements-macos-py313.
 Read [MORNING_PLANNER.md](MORNING_PLANNER.md) for the full agent workflow. On the paired Mac run `.venv/bin/python morning_context.py --materials 5` through an authorized local tool. `--summary` provides a coverage-only smoke test. This starts and closes the local connection for the request; run one collector at a time. The collector gathers LEARN context, not the complete briefing. Calendar, mail and public research use separate authorized connectors. It does not install a schedule or detect wake time. Say “Morning run” in a chat with these tools and these operating instructions.
 
 `planner_state.py` stores bounded private progress/deduplication history in ignored `planner_state/` (directory 0700, file 0600, atomic updates). Never commit that directory. No calendar events or messages are changed by the collector.
+
+## Windows
+
+See [WINDOWS.md](WINDOWS.md) for the Chromium Manifest V3 reader and protected WSL2 document extraction. Mac and Windows use separate pairing keys. Windows setup does not depend on Safari or the Mac. Live sign-in and course-file verification are still required on each new host.
