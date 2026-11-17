@@ -17,6 +17,8 @@ PORT = 18766
 PREFIX = f'127.0.0.1:{PORT}'
 ORIGIN = re.compile(r'(?:safari-web-extension://[A-Za-z0-9-]+|chrome-extension://[a-p]{32})\Z')
 ROUTES = [
+ r'/cs135/page/(?:index\.html|calendar/index\.html|slides/index\.html|assess/index\.html|assign/index\.html)',
+ r'/cs135/file/[A-Za-z0-9][A-Za-z0-9_./-]{0,180}\.pdf',
  r'/d2l/api/le/1\.57/[1-9]\d*/content/topics/[1-9]\d*/file',
  r'/d2l/api/lp/1\.43/users/whoami',
  r'/d2l/api/lp/1\.43/enrollments/myenrollments/\?orgUnitTypeId=3',
@@ -30,7 +32,7 @@ ROUTES = [
  r'/d2l/api/le/1\.57/[1-9]\d*/content/topics/[1-9]\d*',
 ]
 def allowed(path):
-    return isinstance(path, str) and len(path)<=300 and any(re.fullmatch(p,path) for p in ROUTES)
+    return isinstance(path, str) and not any(p in ('.','..') for p in path.split('/')) and len(path)<=300 and any(re.fullmatch(p,path) for p in ROUTES)
 
 def digest(body):
     return hashlib.sha256(body).hexdigest()

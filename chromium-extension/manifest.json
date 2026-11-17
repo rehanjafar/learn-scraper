@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Waterloo LEARN Reader",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Read requested LEARN data on this computer. Never exports cookies or passwords.",
   "permissions": [
     "storage",
@@ -21,17 +21,30 @@
       ],
       "run_at": "document_idle",
       "all_frames": false
+    },
+    {
+      "matches": [
+        "https://student.cs.uwaterloo.ca/~cs135/*"
+      ],
+      "js": [
+        "cs135-policy.js",
+        "cs135-reader.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:18766 https://learn.uwaterloo.ca"
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:18766 https://learn.uwaterloo.ca https://student.cs.uwaterloo.ca"
   },
   "host_permissions": [
     "https://learn.uwaterloo.ca/*",
-    "http://127.0.0.1:18766/*"
+    "http://127.0.0.1:18766/*",
+    "https://student.cs.uwaterloo.ca/~cs135/*"
   ],
   "action": {
     "default_title": "Waterloo Safari Reader",
     "default_popup": "popup.html"
-  }
+  },
+  "minimum_chrome_version": "148"
 }

@@ -33,12 +33,14 @@ async function tick(){
   // Host permission reveals only matching LEARN tabs; no tabs/history permission is requested.
   const tabs=await browser.tabs.query({url:'https://learn.uwaterloo.ca/d2l/home*'});
   const eligible=tabs.filter(t=>/^https:\/\/learn\.uwaterloo\.ca\/d2l\/home(?:[/?#]|$)/.test(t.url||''));
-  const tab=eligible.find(t=>t.active)||eligible[0];if(!tab)return;
+  let tab=eligible.find(t=>t.active)||eligible[0];if(!tab)return;
   const job=await bridge('/next','{}');if(!job?.id)return;
   let result;
   try{
-   if(!SafariPolicy.kind(job.path))throw Error('Blocked request');
-   const reply=await Promise.race([browser.tabs.sendMessage(tab.id,{type:'learnRead',path:job.path}),new Promise((_,reject)=>setTimeout(()=>reject(Error('Tab unavailable')),16000))]);
+   const cs=CS135Policy.kind(job.path);
+   if(!SafariPolicy.kind(job.path)&&!cs)throw Error('Blocked request');
+   if(cs){const ct=await browser.tabs.query({url:'https://student.cs.uwaterloo.ca/~cs135/*'});tab=ct.find(t=>t.active)||ct[0];if(!tab)throw Error('Open CS135 site');}
+   const reply=await Promise.race([browser.tabs.sendMessage(tab.id,{type:cs?'cs135Read':'learnRead',path:job.path}),new Promise((_,reject)=>setTimeout(()=>reject(Error('Tab unavailable')),16000))]);
    if(!reply||(!('data' in reply)&&!('error' in reply)))throw Error('Tab unavailable');
    result='data' in reply?{id:job.id,data:reply.data}:{id:job.id,error:'LEARN sign-in required.'};
   }catch(e){result={id:job.id,error:'Keep a signed-in LEARN home tab open in this browser.'};}

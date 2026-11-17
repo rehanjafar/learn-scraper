@@ -18,11 +18,31 @@ async def collect(days=14,materials=3):
             try:
                 response=await client.call_tool(name,args,raise_on_error=False)
                 if response.is_error:raise RuntimeError('Source request unavailable')
-                result['coverage'][label]={'status':'checked'}
-                await client.call_tool('planner_state_record',{'category':'source_scans','key':label,'value':{'last_success':result['checked_at']},'source':'verified_source'})
+                data=response.data
+                partial=isinstance(data,dict) and (bool(data.get('has_more') or data.get('truncated')) or (name=='cs135_public' and any(p.get('status')!='checked' for p in data.get('pages',{}).values())))
+                result['coverage'][label]={'status':'partial' if partial else 'checked'}
+                if not partial:
+                    await client.call_tool('planner_state_record',{'category':'source_scans','key':label,'value':{'last_success':result['checked_at']},'source':'verified_source'})
                 return response.data
             except Exception:
-                result['coverage'][label]={'status':'unavailable','action':'Check Safari sign-in, LEARN access, and the source link.'};return None
+                result['coverage'][label]={'status':'unavailable','action':'Check browser sign-in, required course tabs, site permission, and the source link.'};return None
+        result['cs135']=await call('cs135_public',{'days':days},'CS135/public')
+        if result['cs135']:
+            for name,page in result['cs135'].get('pages',{}).items():
+                result['coverage']['CS135/'+name]={'status':page.get('status','unavailable'),'source':page.get('source')}
+            if result['cs135']['pages'].get('assignments',{}).get('status')=='requires_browser_sign_in':
+                protected=await call('cs135_page',{'page':'assignments'},'CS135/assignments/browser')
+                if protected:
+                    result['cs135']['pages']['assignments']=protected
+                    result['coverage']['CS135/assignments']={'status':'checked','source':protected['source']}
+                    lessons=result['cs135']['pages'].get('lessons',{}).get('lessons',[])
+                    relevant=[e['title'] for e in result['cs135'].get('upcoming',[]) if re.fullmatch(r'L\d{2}',e['title'])]
+                    selected=next((lesson for code in relevant for lesson in lessons if lesson['lecture']==code),None)
+                    if selected and materials>0:
+                        prefix='https://student.cs.uwaterloo.ca/~cs135/'
+                        document=await call('cs135_file',{'path':selected['url'].removeprefix(prefix),'max_units':6},'CS135/current_lesson')
+                        if document:result['cs135']['materials']=[document]
+            # Public pages remain useful even if browser pairing/LEARN fails.
         courses=await call('learn_courses',{},'LEARN/enrollments')
         if courses is None:return result
         wanted=state['profile']['courses'];remaining=materials
@@ -50,5 +70,5 @@ async def collect(days=14,materials=3):
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--days',type=int,choices=range(1,121),default=14);parser.add_argument('--materials',type=int,choices=range(0,9),default=3);parser.add_argument('--summary',action='store_true');args=parser.parse_args()
     data=asyncio.run(collect(args.days,args.materials))
-    if args.summary:print(json.dumps({'checked_at':data['checked_at'],'course_count':len(data['courses']),'material_count':sum(sum('units' in m for m in c['materials']) for c in data['courses']),'coverage':data['coverage']},ensure_ascii=False))
+    if args.summary:print(json.dumps({'checked_at':data['checked_at'],'course_count':len(data['courses']),'material_count':sum(sum('units' in m for m in c['materials']) for c in data['courses']),'coverage':data['coverage'],'cs135_lesson_count':len(((data.get('cs135') or {}).get('pages',{}).get('lessons',{})).get('lessons',[]))},ensure_ascii=False))
     else:print(json.dumps(data,ensure_ascii=False))

@@ -2,6 +2,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const root=__dirname+'/../chromium-extension/';
 globalThis.chrome={};
 vm.runInThisContext(fs.readFileSync(root+'policy.js','utf8'));
+vm.runInThisContext(fs.readFileSync(root+'cs135-policy.js','utf8'));
 assert.equal(SafariPolicy.kind('/d2l/api/lp/1.43/users/whoami'),'whoami');
 for(const path of ['https://evil.example/','/d2l/home','/d2l/api/lp/1.43/users/whoami?token=x','/d2l/api/le/1.57/1/content/topics/1/file?download=1','/d2l/api/lp/1.43/users/whoami\n'])assert.equal(SafariPolicy.kind(path),null,path);
 const result=SafariPolicy.project('courses',{Items:[{OrgUnit:{Id:1,Name:'Course',Code:'C1',Token:'SECRET'},Access:{CanAccess:true,IsActive:true},Cookie:'SECRET'}],Authorization:'SECRET'});
@@ -28,7 +29,7 @@ const fakeFetch=async(url,options)=>{
  const body=JSON.stringify(data);const signature=forge?'0'.repeat(64):mac(['v1','response',h['X-Waterloo-Nonce'],'200',hash(body)].join('\n'));
  return new Response(body,{status:200,headers:{'X-Waterloo-Signature':signature}});
 };
-const context={browser:{storage:{local:{get:async()=>paired?{localKey:key}:{}}},tabs:{query:async filter=>{assert.equal(filter.url,'https://learn.uwaterloo.ca/d2l/home*');return eligible?[{id:1,url:'https://learn.uwaterloo.ca/d2l/home',active:false}]:[];},sendMessage:async(id,message)=>{assert.equal(id,1);return read(message,{id:own,url:origin+'/background.html'});}}},SafariPolicy,crypto:webcrypto,TextEncoder,TextDecoder,AbortSignal,location:{origin},fetch:fakeFetch,setInterval:()=>{},setTimeout:(f,ms)=>{const t=setTimeout(f,ms);t.unref();return t;}};
+const context={browser:{storage:{local:{get:async()=>paired?{localKey:key}:{}}},tabs:{query:async filter=>{assert.equal(filter.url,'https://learn.uwaterloo.ca/d2l/home*');return eligible?[{id:1,url:'https://learn.uwaterloo.ca/d2l/home',active:false}]:[];},sendMessage:async(id,message)=>{assert.equal(id,1);return read(message,{id:own,url:origin+'/background.html'});}}},SafariPolicy,CS135Policy,crypto:webcrypto,TextEncoder,TextDecoder,AbortSignal,location:{origin},fetch:fakeFetch,setInterval:()=>{},setTimeout:(f,ms)=>{const t=setTimeout(f,ms);t.unref();return t;}};
 vm.createContext(context);vm.runInContext(fs.readFileSync(root+'background.js','utf8'),context);
 (async()=>{
  await new Promise(setImmediate);
@@ -42,7 +43,7 @@ vm.createContext(context);vm.runInContext(fs.readFileSync(root+'background.js','
  await read({...message,path:'https://evil.example/'},{id:own,url:origin+'/background.html'});assert.equal(reads,0);
  eligible=true;job={id:'synthetic-job',path:message.path};await context.tick();
  assert.equal(reads,1);assert.equal(returned.id,'synthetic-job');assert.equal(returned.data.Identifier,42);assert(!JSON.stringify(returned).includes('SECRET'));
- assert.equal(manifest.manifest_version,3);assert.equal(manifest.background.service_worker,'service-worker.js');assert.deepEqual(manifest.host_permissions,['https://learn.uwaterloo.ca/*','http://127.0.0.1:18766/*']);assert.deepEqual(manifest.permissions,['storage','alarms']);assert(!manifest.permissions.includes('tabs'));
+ assert.equal(manifest.manifest_version,3);assert.equal(manifest.background.service_worker,'service-worker.js');assert.deepEqual(manifest.host_permissions,['https://learn.uwaterloo.ca/*','http://127.0.0.1:18766/*','https://student.cs.uwaterloo.ca/~cs135/*']);assert.deepEqual(manifest.permissions,['storage','alarms']);assert(!manifest.permissions.includes('tabs'));
  console.log('EXTENSION_SECURITY_AND_BACKGROUND_ROUNDTRIP_PASSED; NO_EXTRA_PERMISSIONS');
 })().catch(e=>{console.error(e);process.exit(1)});
 
@@ -50,3 +51,8 @@ assert.equal(SafariPolicy.kind('/d2l/api/le/1.57/1/content/topics/1/file'),'file
 assert.equal(SafariPolicy.kind('/d2l/api/lp/1.43/users/whoami'+String.fromCharCode(10)),null);
 assert.equal(SafariPolicy.fileURL(1288715,'/content/enforced/1288715-MATH135_1269/CourseSchedule.pdf'),'https://learn.uwaterloo.ca/content/enforced/1288715-MATH135_1269/CourseSchedule.pdf');
 for(const value of ['https://evil.example/file.pdf','https://learn.uwaterloo.ca/content/enforced/1-other/file.pdf','/content/enforced/1288715-course/../../secret','/content/enforced/1288715-course/file.pdf?token=x','/content/enforced/1288715-course/%25252e%25252e/secret','https://evil@learn.uwaterloo.ca/content/enforced/1288715-course/file.pdf'])assert.throws(()=>SafariPolicy.fileURL(1288715,value));
+
+assert.equal(CS135Policy.kind('/cs135/page/assign/index.html'),'page');
+assert.equal(CS135Policy.kind('/cs135/file/f26-slides/CS135-F26-L17.pdf'),'file');
+for(const path of ['/cs135/file/../../private.pdf','/cs135/file/%2e%2e/private.pdf','/cs135/page/other/index.html','https://evil.example','/cs135/file/a.pdf?token=x','/cs135/file/a.pdf\n'])assert.equal(CS135Policy.kind(path),null,path);
+assert.equal(CS135Policy.url('/cs135/file/f26-slides/CS135-F26-L17.pdf'),'https://student.cs.uwaterloo.ca/~cs135/f26-slides/CS135-F26-L17.pdf');
