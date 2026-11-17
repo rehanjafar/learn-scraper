@@ -43,6 +43,16 @@ async def collect(days=14,materials=3):
                         document=await call('cs135_file',{'path':selected['url'].removeprefix(prefix),'max_units':6},'CS135/current_lesson')
                         if document:result['cs135']['materials']=[document]
             # Public pages remain useful even if browser pairing/LEARN fails.
+        try:
+            from portal_calendar import collect as portal_collect
+            result['portal_calendar']=await asyncio.to_thread(portal_collect)
+            result['coverage']['Portal Calendar']={'status':'checked','source':'private university subscription'}
+        except Exception:
+            result['portal_calendar']={'status':'unavailable'}
+            result['coverage']['Portal Calendar']={'status':'unavailable','action':'Check private Portal subscription; do not assume no classes.'}
+        resume_path=Path(state['profile'].get('resume_path') or ROOT/'planner_state/missing-resume')
+        if resume_path.is_file() and resume_path.resolve().is_relative_to((ROOT/'planner_state').resolve()) and resume_path.stat().st_size<100000:
+            result['resume']={'source':state['profile'].get('resume_source'),'text':resume_path.read_text()}
         courses=await call('learn_courses',{},'LEARN/enrollments')
         if courses is None:return result
         wanted=state['profile']['courses'];remaining=materials

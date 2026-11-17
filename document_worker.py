@@ -13,6 +13,24 @@ def extract(payload):
     data=base64.b64decode(payload['base64'],validate=True)
     if not 0<len(data)<=MAX_BYTES or len(data)!=payload['size']:raise ValueError('Invalid document size')
     if hashlib.sha256(data).hexdigest()!=payload['sha256']:raise ValueError('Document integrity mismatch')
+    if payload['format']=='ics':
+        from icalendar import Calendar
+        import recurring_ical_events
+        from datetime import datetime,time,timedelta
+        from zoneinfo import ZoneInfo
+        tz=ZoneInfo('America/Toronto');today=datetime.now(tz).date();start=datetime.combine(today,time(),tz);end=start+timedelta(days=14)
+        calendar=Calendar.from_ical(data)
+        if len(calendar.subcomponents)>3000:raise ValueError('Calendar bound exceeded')
+        events=recurring_ical_events.of(calendar).between(start,end)
+        if len(events)>1000:raise ValueError('Calendar event bound exceeded')
+        result=[]
+        for event in events:
+            if str(event.get('STATUS','')).upper()=='CANCELLED':continue
+            begin=event.decoded('DTSTART');finish=event.decoded('DTEND',begin)
+            if isinstance(begin,datetime):begin=begin.replace(tzinfo=tz) if begin.tzinfo is None else begin.astimezone(tz)
+            if isinstance(finish,datetime):finish=finish.replace(tzinfo=tz) if finish.tzinfo is None else finish.astimezone(tz)
+            result.append({'title':str(event.get('SUMMARY',''))[:200],'start':begin.isoformat(),'end':finish.isoformat(),'location':str(event.get('LOCATION',''))[:300],'uid_hash':hashlib.sha256(str(event.get('UID','')).encode()).hexdigest()[:24]})
+        return {'format':'ics','events':sorted(result,key=lambda e:e['start']),'window_start':start.isoformat(),'window_end':end.isoformat()}
     kind=payload['format'];units=[];warnings=[];truncated=False;total=0
     start=payload.get('start_unit',1);limit=payload.get('max_units',12)
     if not isinstance(start,int) or not 1<=start<=2000 or not isinstance(limit,int) or not 1<=limit<=20:raise ValueError('Invalid page range')

@@ -2,3 +2,6 @@ fastmcp==4.1.2
 beautifulsoup4==4.15.0
 pypdf==7.1.0
 defusedxml==0.7.1
+
+icalendar==7.3.0
+recurring-ical-events==3.8.2

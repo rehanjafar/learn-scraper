@@ -1,0 +1,13 @@
+{
+  "checked_on": "2026-11-17",
+  "private_feed_configuration": "owner-only; excluded from Git",
+  "private_url_scan": "passed",
+  "fetch_scope": "exact HTTPS Waterloo Portal host and feed path; redirects refused; response size bounded",
+  "extraction": "same isolated parser with no network or host-home access",
+  "recurrence_timezone_exception_fixture": "passed in Samsung WSL runtime",
+  "live_portal_events": "read successfully; private event data not published",
+  "installed_packages": 79,
+  "osv_advisory_matches": 0,
+  "calendar_writes": "none; preview only by user instruction",
+  "gmail_event_task": "creation rejected by service: webhook connector validation; no task active"
+}
